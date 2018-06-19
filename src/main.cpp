@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <time.h>
 #include "webthing.h"
 #include "utils.h"
 #include "http-headers.h"
