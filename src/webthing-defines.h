@@ -30,7 +30,7 @@ static const uint8_t ip[] = {192, 168, 1, 141};
 #endif
 #endif
 
-#if defined(ESP8266) || defined(ESP32)
+#if defined(ARDUINO_AVR_UNO_USE_WIFI) || defined(ESP8266) || defined(ESP32)
 #ifndef WIFI_SSID
 #define WIFI_SSID "Project Xatonif"
 #endif

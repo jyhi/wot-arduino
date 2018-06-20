@@ -4,22 +4,32 @@
 #include "utils.h"
 #include "http-headers.h"
 
+// Use Ethernet shield on Arduino UNO by default
+#if defined(ARDUINO_AVR_UNO) && !defined(ARDUINO_AVR_UNO_USE_WIFI)
+#define ARDUINO_AVR_UNO_USE_ETHERNET
+#endif
+
 // Network
-#ifdef ARDUINO_AVR_UNO
+#if defined(ARDUINO_AVR_UNO)
+#if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
 #include <Ethernet.h>
+#elif defined(ARDUINO_AVR_UNO_USE_WIFI)
+#include <WiFi.h>
 #endif
-#ifdef ESP8266
+#elif defined(ESP8266)
 #include <ESP8266WiFi.h>
-#endif
-#ifdef ESP32
+#elif defined(ESP32)
 #include <WiFi.h>
 #endif
 
 // Server instance
-#ifdef ARDUINO_AVR_UNO
+#if defined(ARDUINO_AVR_UNO)
+#if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
 EthernetServer server(SERVER_HTTP_PORT);
+#elif defined(ARDUINO_AVR_UNO_USE_WIFI)
+WiFiServer server(SERVER_HTTP_PORT);
 #endif
-#if defined(ESP8266) || defined(ESP32)
+#elif defined(ESP8266) || defined(ESP32)
 WiFiServer server(SERVER_HTTP_PORT);
 #endif
 
@@ -33,7 +43,7 @@ WiFiServer server(SERVER_HTTP_PORT);
 
 void setup()
 {
-#ifdef DEBUG
+#if defined(DEBUG)
   Serial.begin(115200);
 #endif
 
@@ -41,34 +51,29 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
-#ifdef ARDUINO_AVR_UNO
-#ifdef DEBUG
+#if defined(DEBUG)
+#if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
   Serial.println(F("** Connecting Ethernet"));
+#elif defined(ARDUINO_AVR_UNO_USE_WIFI) || defined(ESP8266) || defined(ESP32)
+  Serial.println(F("** Connecting WiFi"));
+#endif
 #endif
 
-#ifdef ARDUINO_ETHERNET_NO_DHCP
+#if defined(ARDUINO_AVR_UNO)
+#if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
+#if defined(ARDUINO_ETHERNET_NO_DHCP)
   Ethernet.begin((uint8_t *)mac, (uint8_t *)ip);
 #else
   Ethernet.begin((uint8_t *)mac);
 #endif
+#endif
 
   server.begin();
 
-#ifdef DEBUG
-#ifdef ARDUINO_ETHERNET_NO_DHCP
-  Serial.print(F("** IP: "));
-  Serial.println(ip);
-#else
-  Serial.print(F("** DHCP: "));
-  Serial.println(Ethernet.localIP());
 #endif
-#endif
-#endif // #ifdef ARDUINO_AVR_UNO
 
-#if defined(ESP8266) || defined(ESP32)
-#ifdef DEBUG
-  Serial.println(F("** Connecting WiFi: " WIFI_SSID));
-#endif
+#if (defined (ARDUINO_AVR_UNO) && defined(ARDUINO_AVR_UNO_USE_WIFI)) || \
+     defined(ESP8266) || defined(ESP32)
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -82,23 +87,41 @@ void setup()
   digitalWrite(LED_BUILTIN, LOW);
 
   server.begin();
-  server.setNoDelay(true);
 
-#ifdef DEBUG
+#if defined(DEBUG)
+#if defined(ARDUINO_AVR_UNO) && defined(ARDUINO_AVR_UNO_USE_ETHERNET)
+#if defined(ARDUINO_ETHERNET_NO_DHCP)
+  Serial.print  (F("** IP: "));
+  Serial.print  (ip[0]);
+  Serial.print  (F("."));
+  Serial.print  (ip[1]);
+  Serial.print  (F("."));
+  Serial.print  (ip[2]);
+  Serial.print  (F("."));
+  Serial.println(ip[3]);
+#else
+  Serial.print(F("** DHCP: "));
+  Serial.println(Ethernet.localIP());
+#endif
+#else
   Serial.print(F("** DHCP: "));
   Serial.println(WiFi.localIP());
 #endif
-#endif // #if defined(ESP8266) || defined(ESP32)
+#endif
+#endif
 }
 
 void loop()
 {
   // Check connection availability
-#ifdef ARDUINO_AVR_UNO
+#if defined(ARDUINO_AVR_UNO)
+#if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
   network_maintain();
   EthernetClient client = server.available();
+#elif defined(ARDUINO_AVR_UNO_USE_WIFI)
+  WiFiClient client = server.available();
 #endif
-#if defined(ESP8266) || defined(ESP32)
+#elif defined(ESP8266) || defined(ESP32)
   WiFiClient client = server.available();
 #endif
 
@@ -117,7 +140,7 @@ void loop()
         goto end;
   }
 
-#ifdef DEBUG
+#if defined(DEBUG)
   Serial.print  (F("** New connection, incoming "));
   Serial.print  (client.available());
   Serial.println(F(" bytes"));
@@ -136,7 +159,7 @@ void loop()
     payload[i] = client.read();
   }
 
-#ifdef DEBUG
+#if defined(DEBUG)
   Serial.println(F("** ===== Payload:"));
   Serial.println(payload);
   Serial.println(F("** ====="));
@@ -144,7 +167,7 @@ void loop()
 
   webthing_handle_request(response, payload);
 
-#ifdef DEBUG
+#if defined(DEBUG)
   Serial.println(F("** ===== Response:"));
   Serial.println(response);
   Serial.println(F("** ====="));
@@ -153,7 +176,7 @@ void loop()
   client.println(response);
 
 end:
-#ifdef DEBUG
+#if defined(DEBUG)
   Serial.println(F("** Closing connection"));
 #endif
 
