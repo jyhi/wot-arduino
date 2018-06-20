@@ -118,7 +118,8 @@ extern "C" void webthing_handle_thing_properties(char *response, bool is_ctype_j
   // URL dispatcher
   if (strcasecmp_P(path, PSTR("")) == 0 || strcasecmp_P(path, PSTR("/")) == 0) {
     webthing_handle_thing_properties_all(response, method);
-  } else if (strcasecmp_P(path, PSTR("/on")) == 0) {
+  } else if (strcasecmp_P(path, PSTR("/on")) == 0 ||
+             strcasecmp_P(path, PSTR("/on/")) == 0) {
     webthing_handle_thing_properties_on(response, is_ctype_json, method, message);
   } else {
     strcat_P(response, http_404);
