@@ -68,7 +68,8 @@ void webthing_handle_request(char *response, const char *payload)
     webthing_handle_thing_actions(response,
                                   is_ctype_json,
                                   http_method,
-                                  http_path + strlen_P(PSTR("/things/" WEBTHING_NAME "/actions")));
+                                  http_path + strlen_P(PSTR("/things/" WEBTHING_NAME "/actions")),
+                                  strstr_P(payload, PSTR("\r\n\r\n")) + 4);
   } else if (strncasecmp_P(http_path,
                          PSTR("/things/" WEBTHING_NAME "/events"),
                          strlen_P(PSTR("/things/" WEBTHING_NAME "/events"))) == 0) {

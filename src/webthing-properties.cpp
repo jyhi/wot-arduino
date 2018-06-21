@@ -3,7 +3,10 @@
 #include "http-headers.h"
 #include "webthing-properties.h"
 
+#ifndef LED_PIN
 #define LED_PIN LED_BUILTIN
+#endif
+
 #define BUFSIZE_JSON 64
 
 static void webthing_handle_thing_properties_on(char *response, bool is_ctype_json, const char *method, const char *message)

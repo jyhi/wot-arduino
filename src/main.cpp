@@ -41,6 +41,10 @@ WiFiServer server(SERVER_HTTP_PORT);
 // after connection is established
 #define CONNECTION_TIMEOUT 4
 
+#ifndef LED_PIN
+#define LED_PIN LED_BUILTIN
+#endif
+
 void setup()
 {
 #if defined(DEBUG)
@@ -49,7 +53,8 @@ void setup()
 
   // Internal LED is used to indicate setup status
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
+
+  pinMode(LED_PIN, OUTPUT);
 
 #if defined(DEBUG)
 #if defined(ARDUINO_AVR_UNO_USE_ETHERNET)
@@ -75,6 +80,7 @@ void setup()
 #if (defined (ARDUINO_AVR_UNO) && defined(ARDUINO_AVR_UNO_USE_WIFI)) || \
      defined(ESP8266) || defined(ESP32)
 
+  WiFi.mode(WIFI_STA); // Otherwise AP+STA is used, exposing an unnecessary AP
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -84,7 +90,11 @@ void setup()
     delay(250);
   }
   // LED should be low on success
+#if defined(ESP8266)
+  digitalWrite(LED_BUILTIN, HIGH); // LED_BUILTIN on ESP8266 is low active
+#else
   digitalWrite(LED_BUILTIN, LOW);
+#endif
 
   server.begin();
 
